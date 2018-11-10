@@ -1,0 +1,6 @@
+Tabs
+1 - map with locations: geo_coords
+2 - top hashtags: hashtags
+3 - top ten tweets based on favorite_count and retweet_count: favorite_count, retweet_count, text, screen_name
+4 - top ten tweets by most followed people: followers_count, screen_name, text
+5 - other analyses (proportion of retweets, media_type, source): is_retweet, source, media_type
