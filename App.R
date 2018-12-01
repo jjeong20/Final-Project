@@ -33,7 +33,8 @@ ui <- fluidPage(
       tabsetPanel(type = "tabs",
                   tabPanel("Map", plotOutput("plot")),
                   tabPanel("Top Hashtags", dataTableOutput("hashtags")),
-                  tabPanel("Top Tweets", dataTableOutput("favorite"), dataTableOutput("retweeted")),
+                  tabPanel("Top Favorited Tweets", dataTableOutput("favorite")),
+                  tabPanel("Top Retweeted Tweets", dataTableOutput("retweeted")),
                   tabPanel("Tweets by Most Followed Users", dataTableOutput("followed")),
                   tabPanel("Top 6 Sources", dataTableOutput("sources"))
       )
@@ -167,7 +168,7 @@ server <- function(input, output) {
     datatable(top_followed())
   })
   
-  output$followed <- renderDataTable({
+  output$sources <- renderDataTable({
     datatable(top_sources())
   })
   
