@@ -21,14 +21,21 @@ head(rt, 6)
 
 rt_var <- rt %>%
   filter(lang == 'en') %>%
-  select (rt$screen_name, rt$text, rt$source, rt$favorite_count, rt$retweet_count, 
-          rt$hashtags, rt$media_type, rt$bbox_coords, rt$followers_count) 
+  select (screen_name, text, source, favorite_count, retweet_count, 
+          hashtags, media_type, bbox_coords, followers_count)
+
+#rt_var <- rt %>%
+ # filter(lang == 'en') %>%
+  
+#select (rt$screen_name, rt$text, rt$source, rt$favorite_count, rt$retweet_count, 
+ #         rt$hashtags, rt$media_type, rt$bbox_coords, rt$followers_count) 
 head(rt_var)
 
 ## Tab 1: Geographical Distribution
 
 rt1 <- rt_var %>%
-  select(bbox_coords)
+  select(bbox_coords) %>%
+  mutate(long = (bbox_coords[[1]][1]+bbox_coords[[1]][2]+bbox_coords[[1]][3]+bbox_coords[[1]][4])/4)
 
 head(rt1, 10)
 
