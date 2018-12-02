@@ -148,8 +148,6 @@ server <- function(input, output) {
       summarise(count = n()) %>%
       arrange(desc(count))
     return(sources)
-    
-    
   })
   
   output$hashtags <- renderDataTable({
@@ -173,7 +171,25 @@ server <- function(input, output) {
   })
   
   output$plot <- renderPlot({
+    rt_var <- rt_var()
+    n_coords_na <- sapply(rt_var$bbox_coords, FUN=function(x) sum(is.na(x)))
+    rt_var$n_missing_coords <- n_coords_na
     
+    rt1 <- rt_var%>%
+      filter(n_missing_coords == 0) %>%
+      select(bbox_coords)
+    
+    long <- vector()
+    lat <- vector()
+    for(i in 1:length(rt1$bbox_coords)){
+      long = c(long, (rt1[i,][[1]][1]+rt1[i,][[1]][2]+rt1[i,][[1]][3]+rt1[i,][[1]][4])/4)
+      lat = c(lat, (rt1[i,][[1]][5]+rt1[i,][[1]][6]+rt1[i,][[1]][7]+rt1[i,][[1]][8])/4)
+    }
+    
+    rt1$lat <- lat
+    rt1$long <- long
+    
+    ggplot(rt1, aes(long, lat))+geom_point()
   })
   
   

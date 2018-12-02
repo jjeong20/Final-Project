@@ -2,6 +2,8 @@
 
 library(rtweet)
 library(dplyr)
+library(ggplot2)
+library(ggmap)
 
 create_token(
   app = "StatsProjectAmherst",
@@ -32,13 +34,30 @@ rt_var <- rt %>%
 head(rt_var)
 
 ## Tab 1: Geographical Distribution
+# create a new column that counts the number of missing coordinates
+n_coords_na <- sapply(rt_var$bbox_coords, FUN=function(x) sum(is.na(x)))
+rt_var$n_missing_coords <- n_coords_na
 
 rt1 <- rt_var %>%
-  select(bbox_coords) %>%
-  mutate(long = (bbox_coords[[1]][1]+bbox_coords[[1]][2]+bbox_coords[[1]][3]+bbox_coords[[1]][4])/4)
+  filter(n_missing_coords == 0) %>%
+  select(bbox_coords)
+  
+long <- vector()
+lat <- vector()
+for(i in 1:length(rt1$bbox_coords)){
+  long = c(long, (rt1[i,][[1]][1]+rt1[i,][[1]][2]+rt1[i,][[1]][3]+rt1[i,][[1]][4])/4)
+  lat = c(lat, (rt1[i,][[1]][5]+rt1[i,][[1]][6]+rt1[i,][[1]][7]+rt1[i,][[1]][8])/4)
+}
 
-head(rt1, 10)
+rt1$lat <- lat
+rt1$long <- long
 
+key <-'AIzaSyBEFCczMIoaqG1qQEBpegstM-voPqg9UdM'
+map <- get_map(location = c(lon = mean(rt1$long), lat = mean(rt1$lat)), zoom = 4,
+                     maptype = "satellite", scale = 2, api_key=key)
+ggmap(map) +
+  geom_point(data = rt1, aes(x = long, y = lat, fill = "red", alpha = 0.8), size = 5, shape = 21) +
+  guides(fill=FALSE, alpha=FALSE, size=FALSE)
 
 ## Tab 2: Top Hashtags
 
