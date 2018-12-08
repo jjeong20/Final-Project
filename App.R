@@ -17,7 +17,8 @@ ui <- fluidPage(
     
     # Sidebar panel for inputs ----
     sidebarPanel(
-      
+      checkboxInput("search_tweets", "Search Tweets:",
+                    FALSE),
       textInput("keyword", "Keyword to search:", "")
     ),
     # Main panel for displaying outputs ----
@@ -56,9 +57,14 @@ server <- function(input, output) {
   
   ## search for 18000 tweets using the rstats hashtag
   rt_var <- reactive({
-    rt <- search_tweets(
-      input$keyword, n = 18000, include_rts = FALSE
-    )
+    if(input$search_tweets){
+      rt <- search_tweets(
+        input$keyword, n = 18000, include_rts = FALSE
+      )
+    }
+    else{
+      rt <- readRDS('christmas_12_8.rds')
+    }
     
     rt <- rt %>%
       filter(lang == 'en') %>%
@@ -70,8 +76,6 @@ server <- function(input, output) {
   
   # Create reactive data frame
   hashtag <- reactive({
-    req(input$keyword)
-    
     rt2 <- rt_var() %>%
       select(hashtags) %>%
       filter(!is.na(hashtags))
@@ -150,6 +154,33 @@ server <- function(input, output) {
     return(sources)
   })
   
+  rt1 <- reactive({
+    rt_var <- rt_var()
+    n_coords_na <- sapply(rt_var$bbox_coords, FUN=function(x) sum(is.na(x)))
+    rt_var$n_missing_coords <- n_coords_na
+    
+    rt1 <- rt_var%>%
+      filter(n_missing_coords == 0) %>%
+      select(bbox_coords)
+    
+    long <- vector()
+    lat <- vector()
+    for(i in 1:length(rt1$bbox_coords)){
+      if(is.numeric(rt1[i,][[1]][1])){
+        long = c(long, (rt1[i,][[1]][1]+rt1[i,][[1]][2]+rt1[i,][[1]][3]+rt1[i,][[1]][4])/4)
+        lat = c(lat, (rt1[i,][[1]][5]+rt1[i,][[1]][6]+rt1[i,][[1]][7]+rt1[i,][[1]][8])/4)
+      }
+      else{
+        long = c(long, (rt1[i,][[1]][[1]][1]+rt1[i,][[1]][[1]][2]+rt1[i,][[1]][[1]][3]+rt1[i,][[1]][[1]][4])/4)
+        lat = c(lat, (rt1[i,][[1]][[1]][5]+rt1[i,][[1]][[1]][6]+rt1[i,][[1]][[1]][7]+rt1[i,][[1]][[1]][8])/4)    
+      }
+    }
+    
+    rt1$lat <- lat
+    rt1$long <- long
+    return(rt1)
+  })
+  
   output$hashtags <- renderDataTable({
     datatable(hashtag())
   })
@@ -171,25 +202,13 @@ server <- function(input, output) {
   })
   
   output$plot <- renderPlot({
-    rt_var <- rt_var()
-    n_coords_na <- sapply(rt_var$bbox_coords, FUN=function(x) sum(is.na(x)))
-    rt_var$n_missing_coords <- n_coords_na
+    #Using GGPLOT, plot the Base World Map
+    rt1 <- rt1()
+    mapWorld <- borders("world", colour="gray50", fill="gray50") # create a layer of borders
+    mp <- ggplot() +   mapWorld
     
-    rt1 <- rt_var%>%
-      filter(n_missing_coords == 0) %>%
-      select(bbox_coords)
-    
-    long <- vector()
-    lat <- vector()
-    for(i in 1:length(rt1$bbox_coords)){
-      long = c(long, (rt1[i,][[1]][1]+rt1[i,][[1]][2]+rt1[i,][[1]][3]+rt1[i,][[1]][4])/4)
-      lat = c(lat, (rt1[i,][[1]][5]+rt1[i,][[1]][6]+rt1[i,][[1]][7]+rt1[i,][[1]][8])/4)
-    }
-    
-    rt1$lat <- lat
-    rt1$long <- long
-    
-    ggplot(rt1, aes(long, lat))+geom_point()
+    #Now Layer the cities on top
+    mp + geom_point(aes(rt1$long, rt1$lat), color = 'blue', size = 1)
   })
   
   
