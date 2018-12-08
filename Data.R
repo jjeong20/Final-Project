@@ -3,7 +3,6 @@
 library(rtweet)
 library(dplyr)
 library(ggplot2)
-library(ggmap)
 
 create_token(
   app = "StatsProjectAmherst",
@@ -14,7 +13,7 @@ create_token(
 
 ## search for 18000 tweets using the rstats hashtag
 rt <- search_tweets(
-  "Trump", n = 18000, include_rts = FALSE
+  "Global Warming", n = 18000, include_rts = FALSE
 )
 
 head(rt, 6)
@@ -25,12 +24,6 @@ rt_var <- rt %>%
   filter(lang == 'en') %>%
   select (screen_name, text, source, favorite_count, retweet_count, 
           hashtags, media_type, bbox_coords, followers_count)
-
-#rt_var <- rt %>%
- # filter(lang == 'en') %>%
-  
-#select (rt$screen_name, rt$text, rt$source, rt$favorite_count, rt$retweet_count, 
- #         rt$hashtags, rt$media_type, rt$bbox_coords, rt$followers_count) 
 head(rt_var)
 
 ## Tab 1: Geographical Distribution
@@ -45,19 +38,26 @@ rt1 <- rt_var %>%
 long <- vector()
 lat <- vector()
 for(i in 1:length(rt1$bbox_coords)){
-  long = c(long, (rt1[i,][[1]][1]+rt1[i,][[1]][2]+rt1[i,][[1]][3]+rt1[i,][[1]][4])/4)
-  lat = c(lat, (rt1[i,][[1]][5]+rt1[i,][[1]][6]+rt1[i,][[1]][7]+rt1[i,][[1]][8])/4)
+  if(is.numeric(rt1[i,][[1]][1])){
+    long = c(long, (rt1[i,][[1]][1]+rt1[i,][[1]][2]+rt1[i,][[1]][3]+rt1[i,][[1]][4])/4)
+    lat = c(lat, (rt1[i,][[1]][5]+rt1[i,][[1]][6]+rt1[i,][[1]][7]+rt1[i,][[1]][8])/4)
+  }
+  else{
+    long = c(long, (rt1[i,][[1]][[1]][1]+rt1[i,][[1]][[1]][2]+rt1[i,][[1]][[1]][3]+rt1[i,][[1]][[1]][4])/4)
+    lat = c(lat, (rt1[i,][[1]][[1]][5]+rt1[i,][[1]][[1]][6]+rt1[i,][[1]][[1]][7]+rt1[i,][[1]][[1]][8])/4)    
+  }
 }
 
 rt1$lat <- lat
 rt1$long <- long
 
-key <-'AIzaSyBEFCczMIoaqG1qQEBpegstM-voPqg9UdM'
-map <- get_map(location = c(lon = mean(rt1$long), lat = mean(rt1$lat)), zoom = 4,
-                     maptype = "satellite", scale = 2, api_key=key)
-ggmap(map) +
-  geom_point(data = rt1, aes(x = long, y = lat, fill = "red", alpha = 0.8), size = 5, shape = 21) +
-  guides(fill=FALSE, alpha=FALSE, size=FALSE)
+#Using GGPLOT, plot the Base World Map
+mapWorld <- borders("world", colour="gray50", fill="gray50") # create a layer of borders
+mp <- ggplot() +   mapWorld
+
+#Now Layer the cities on top
+mp <- mp+ geom_point(aes(x=visit.x, y=visit.y) ,color="blue", size=3) 
+mp + geom_point(aes(rt1$long, rt1$lat), color = 'blue', size = 1)
 
 ## Tab 2: Top Hashtags
 
