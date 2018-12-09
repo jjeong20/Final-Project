@@ -206,11 +206,7 @@ server <- function(input, output) {
   output$plot <- renderPlot({
     #Using GGPLOT, plot the Base World Map
     rt1 <- rt1()
-    mapWorld <- borders("United States", colour="gray50", fill="gray50") # create a layer of borders
-    mp <- ggplot() +   mapWorld
-    
-    #Now Layer the cities on top
-    mp + geom_point(aes(rt1$long, rt1$lat), color = 'blue', size = 1)
+    ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'red', size = 0.8) 
   })
   
   
