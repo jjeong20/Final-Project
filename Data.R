@@ -3,6 +3,9 @@
 library(rtweet)
 library(dplyr)
 library(ggplot2)
+library(sp)
+library(maps)
+library(maptools)
 
 create_token(
   app = "StatsProjectAmherst",
@@ -25,6 +28,7 @@ rt_var <- rt %>%
   select (screen_name, text, source, favorite_count, retweet_count, 
           hashtags, media_type, bbox_coords, followers_count)
 head(rt_var)
+
 
 ## Tab 1: Geographical Distribution
 # create a new column that counts the number of missing coordinates
@@ -117,6 +121,36 @@ sources <- rt5 %>%
   summarise(count = n()) %>%
   arrange(desc(count))
 sources
+
+# Tab 6
+
+latlong2state <- function(pointsDF) {
+  # Prepare SpatialPolygons object with one SpatialPolygon
+  # per state (plus DC, minus HI & AK)
+  states <- map('state', fill=TRUE, col="transparent", plot=FALSE)
+  IDs <- sapply(strsplit(states$names, ":"), function(x) x[1])
+  states_sp <- map2SpatialPolygons(states, IDs=IDs,
+                                   proj4string=CRS("+proj=longlat +datum=WGS84"))
+  
+  # Convert pointsDF to a SpatialPoints object
+  pointsSP <- SpatialPoints(pointsDF,
+                            proj4string=CRS("+proj=longlat +datum=WGS84"))
+  
+  # Use 'over' to get _indices_ of the Polygons object containing each point
+  indices <- over(pointsSP, states_sp)
+  
+  # Return the state names of the Polygons object containing each point
+  stateNames <- sapply(states_sp@polygons, function(x) x@ID)
+  stateNames[indices]
+}
+
+# Test the function using points in Wisconsin and Oregon.
+rt_coords <- rt1[,2:3]
+rt_coords[,1] <-rt1[,3] 
+rt_coords[,2] <- rt1[,2]
+names(rt_coords) <- c('long', 'lat')
+states <- latlong2state(rt_coords)
+rt1$states <- states
 
 
 
