@@ -2,6 +2,7 @@ library(shiny)
 library(dplyr)
 library(rtweet)
 library(DT)
+library(ggplot2)
 
 
 # Define UI
@@ -59,11 +60,11 @@ server <- function(input, output) {
   rt_var <- reactive({
     if(input$search_tweets){
       rt <- search_tweets(
-        input$keyword, n = 18000, include_rts = FALSE
+        input$keyword, n = 18000, include_rts = FALSE, geocode = lookup_coords('usa')
       )
     }
     else{
-      rt <- readRDS('christmas_12_8.rds')
+      rt <- readRDS('fire.rda')
     }
     
     rt <- rt %>%
@@ -99,7 +100,7 @@ server <- function(input, output) {
   
   # Create reactive data frame
   top_favorite <- reactive({
-    rt3 <- rt_var() %>%
+    rt3 <- rt_var()%>%
       select(favorite_count, retweet_count, screen_name, text)
     
     rt3 <- rt3 %>%
@@ -113,7 +114,7 @@ server <- function(input, output) {
   
   # Create reactive data frame
   top_retweet <- reactive({
-    rt3 <- rt_var() %>%
+    rt3 <- rt_var()%>%
       select(favorite_count, retweet_count, screen_name, text)
     
     rt3 <- rt3 %>%
@@ -126,7 +127,7 @@ server <- function(input, output) {
   })
   
   top_followed <- reactive({
-     rt4 <- rt_var() %>%
+     rt4 <- rt_var()  %>%
        select(followers_count, screen_name, text) %>%
        arrange(desc(followers_count)) %>%
        head(10)
@@ -138,6 +139,7 @@ server <- function(input, output) {
     
     rt5 <- rt_var() %>%
       select(source, media_type)
+    
     
     sources_temp <- rt5 %>%
       group_by(source) %>%
@@ -204,7 +206,7 @@ server <- function(input, output) {
   output$plot <- renderPlot({
     #Using GGPLOT, plot the Base World Map
     rt1 <- rt1()
-    mapWorld <- borders("world", colour="gray50", fill="gray50") # create a layer of borders
+    mapWorld <- borders("United States", colour="gray50", fill="gray50") # create a layer of borders
     mp <- ggplot() +   mapWorld
     
     #Now Layer the cities on top

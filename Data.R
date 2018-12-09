@@ -13,7 +13,7 @@ create_token(
 
 ## search for 18000 tweets using the rstats hashtag
 rt <- search_tweets(
-  "Global Warming", n = 18000, include_rts = FALSE
+  "Apple", n = 18000,geocode = lookup_coords('usa'), include_rts = FALSE
 )
 
 head(rt, 6)
@@ -52,11 +52,10 @@ rt1$lat <- lat
 rt1$long <- long
 
 #Using GGPLOT, plot the Base World Map
-mapWorld <- borders("world", colour="gray50", fill="gray50") # create a layer of borders
+mapWorld <- borders("usa", colour="gray50", fill="gray50") # create a layer of borders
 mp <- ggplot() +   mapWorld
 
 #Now Layer the cities on top
-mp <- mp+ geom_point(aes(x=visit.x, y=visit.y) ,color="blue", size=3) 
 mp + geom_point(aes(rt1$long, rt1$lat), color = 'blue', size = 1)
 
 ## Tab 2: Top Hashtags
