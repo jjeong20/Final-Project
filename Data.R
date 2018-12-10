@@ -16,7 +16,7 @@ create_token(
 
 ## search for 18000 tweets using the rstats hashtag
 rt <- search_tweets(
-  "Apple", n = 18000,geocode = lookup_coords('usa'), include_rts = FALSE
+  "Democrat", n = 18000,geocode = lookup_coords('usa'), include_rts = FALSE
 )
 
 head(rt, 6)
@@ -151,6 +151,20 @@ rt_coords[,2] <- rt1[,2]
 names(rt_coords) <- c('long', 'lat')
 states <- latlong2state(rt_coords)
 rt1$states <- states
+
+
+rt_state<-rt1 %>%
+  filter(!is.na(states))%>%
+  group_by(states)%>%
+  summarize(count=n())%>%
+  arrange(desc(count))%>%
+  head(10)
+
+ggplot(rt_state,aes(reorder(states, -count, sum), count))+
+  xlab("Top 10 States")+
+  theme(axis.text.x = element_text(angle=60, hjust=1))+
+  geom_col()
+
 
 
 
