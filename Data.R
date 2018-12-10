@@ -16,7 +16,7 @@ create_token(
 
 ## search for 18000 tweets using the rstats hashtag
 rt <- search_tweets(
-  "Democrat", n = 18000,geocode = lookup_coords('usa'), include_rts = FALSE
+  "Republican", n = 18000,geocode = lookup_coords('usa'), include_rts = FALSE
 )
 
 head(rt, 6)

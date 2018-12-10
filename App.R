@@ -15,15 +15,16 @@ ui <- fluidPage(
   
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
-    
     # Sidebar panel for inputs ----
     sidebarPanel(
+      "To search for keywords, type in two keywords",
+      "then check 'Search Tweets' box to search",
       checkboxInput("search_tweets", "Search Tweets:",
                     FALSE),
       textInput('keyword1', "First Keyword to Search:", ""),
       textInput("keyword2", "Second Keyword to Search:", ""),
-      selectInput('default1', 'Pre-downloaded Keyword 1:', c('Apple', 'Samsung')),
-      selectInput('default2', 'Pre-downloaded Keyword 2:', c('Apple', 'Samsung'),selected='Samsung')
+      selectInput('default1', 'Pre-downloaded Keyword 1:', c('Apple', 'Samsung','Republican', 'Democrat'), selected='Democrat'),
+      selectInput('default2', 'Pre-downloaded Keyword 2:', c('Apple', 'Samsung','Republican', 'Democrat'),selected='Republican')
     ),
     # Main panel for displaying outputs ----
     mainPanel(
@@ -32,11 +33,16 @@ ui <- fluidPage(
       tabsetPanel(type = "tabs",
                   tabPanel('Maps',
                     fluidRow(
-                      column(width = 5,h2('Map: Keyword 1'), plotOutput("plot1")),
-                      column(width = 5, h2('Map: Keyword 2'),plotOutput("plot2"))
+                      column(width = 5,plotOutput("plot1")),
+                      column(width = 5, plotOutput("plot2"))
                     )
                   ),
-                  #tabPanel('Compare By State', plotOutput('comparison')),
+                  tabPanel('Compare By State', plotOutput('comparison'), 
+                           fluidRow(
+                             column(width = 5,plotOutput("comparison2")),
+                             column(width = 5, plotOutput("comparison3"))
+                           )
+                           ),
                   tabPanel('Top Hashtags',
                     fluidRow(
                       column(width = 5,h2('Top Hashtags: Keyword 1'), dataTableOutput("hashtags1")),
@@ -208,7 +214,7 @@ server <- function(input, output) {
     rt_coords[,2] <- rt1[,2]
     names(rt_coords) <- c('long', 'lat')
     states <- latlong2state(rt_coords)
-    rt1$state <- state
+    rt1$state <- states
     return(rt1)
   })
   
@@ -229,9 +235,16 @@ server <- function(input, output) {
   })
   
   output$plot1 <- renderPlot({
+    if(input$search_tweets){
+      word1 <- input$keyword1
+      word2 <- input$keyword2
+    } else{
+      word1 <- input$default1
+      word2 <- input$default2
+    }
     #Using GGPLOT, plot the Base World Map
     rt1 <- rt1()
-    ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'red', size = 0.8) 
+    ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'blue', size = 0.8) + labs(title=paste('Map:', word1)) 
   })
   
   
@@ -372,8 +385,23 @@ server <- function(input, output) {
     rt_coords[,2] <- rt1[,2]
     names(rt_coords) <- c('long', 'lat')
     states <- latlong2state(rt_coords)
-    rt1$state <- state
+    rt1$state <- states
     return(rt1)
+  })
+  
+  joined_states<-reactive({
+    key1 <- states1()
+    key2 <- states2()
+    key1 <- key1 %>%
+      group_by(state) %>%
+      summarise(count1 = n())
+    key2 <- key2 %>%
+      group_by(state) %>%
+      summarise(count2 = n()) 
+    key <- merge(key1, key2, by = 'state')
+    key <- key %>%
+      filter(!is.na(state))
+    return(key)
   })
   
   output$hashtags2 <- renderDataTable({
@@ -394,34 +422,95 @@ server <- function(input, output) {
   
   output$plot2 <- renderPlot({
     #Using GGPLOT, plot the Base World Map
+    if(input$search_tweets){
+      word1 <- input$keyword1
+      word2 <- input$keyword2
+    } else{
+      word1 <- input$default1
+      word2 <- input$default2
+    }
     rt1 <- rt2()
-    ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'blue', size = 0.8) 
+    ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'red', size = 0.8) +labs(title=paste('Map:',word2))
   })
   
   output$comparison <- renderPlot({
-    key1 <- states1()
-    key2 <- states2()
-    key1 <- key1 %>%
-      group_by(state) %>%
-      summarise(count1 = n())
-    key2 <- key2 %>%
-      group_by(state) %>%
-      summarise(count2 = n()) %>%
-      join(key2, by = 'state', type = 'outer')
+    if(input$search_tweets){
+      word1 <- input$keyword1
+      word2 <- input$keyword2
+    } else{
+      word1 <- input$default1
+      word2 <- input$default2
+    }
+    
+    key <- joined_states()
     state1 <- vector()
     state2 <- vector()
-    for(entry in key2){
-      if(entry$count1 > entry$count2){
-        state1 <- c(state1, entry$state)
-      }
-      else if(entry$count2 > entry$count1){
-        state2 <- c(state2, entry$state)
+    state3 <- vector()
+    for(i in 1:length(key$state)){
+      if(key[i,2] > key[i,3]){
+        state1 <- c(state1, key[i,1])
+      }else if(key[i,3] > key[i,2]){
+        state2 <- c(state2, key[i,1])
+      }else{
+        state3 <- c(state3, key[i, 1])
       }
     }
     
     map(database = 'state')
-    map(database = "state",regions = state1,col = "blue",fill=T,add=TRUE)
-    map(database = "state",regions = state2,col = "red",fill=T,add=TRUE)
+    if(!identical(state1, logical(0))){
+      map(database = "state",regions = state1,col = "red",fill=T,add=TRUE)
+    }
+    if(!identical(state2, logical(0))){
+      map(database = "state",regions = state2,col = "blue",fill=T,add=TRUE)
+    }
+    if(!identical(state3, logical(0))){
+      map(database = "state",regions = state3,col = "light gray",fill=T,add=TRUE)
+    }
+    legend("bottomright", c(word1, word2, 'Neutral'), fill = c('blue', 'red','gray'))
+  
+    keyword2 <- key %>%
+      mutate(diff = count2 - count1) %>%
+      arrange(desc(diff)) %>%
+      head(10)
+    keyword2
+  })
+  
+  output$comparison2 <- renderPlot({
+    if(input$search_tweets){
+      word1 <- input$keyword1
+      word2 <- input$keyword2
+    } else{
+      word1 <- input$default1
+      word2 <- input$default2
+    }
+    key <- joined_states()
+    keyword1 <- key %>%
+      mutate(diff = count1 - count2) %>%
+      arrange(desc(diff)) %>%
+      head(10)
+    ggplot(keyword1, aes(reorder(state, -diff, sum), diff))+
+      xlab("Top 10 States")+ggtitle(paste('Top 10 States "',word1 ,'" Was Searched More than "',word2,'"', sep=""))+
+      theme(axis.text.x = element_text(angle=60, hjust=1))+
+      geom_col()
+  })
+  
+  output$comparison3 <- renderPlot({
+    if(input$search_tweets){
+      word1 <- input$keyword1
+      word2 <- input$keyword2
+    } else{
+      word1 <- input$default1
+      word2 <- input$default2
+    }
+    key <- joined_states()
+    keyword2 <- key %>%
+      mutate(diff = count2 - count1) %>%
+      arrange(desc(diff)) %>%
+      head(10)
+    ggplot(keyword2, aes(reorder(state, -diff, sum), diff))+
+      xlab("Top 10 States")+ggtitle(paste('Top 10 States "',word2 ,'" Was Searched More than "',word1,'"', sep=""))+
+      theme(axis.text.x = element_text(angle=60, hjust=1))+
+      geom_col()
   })
   
 }
