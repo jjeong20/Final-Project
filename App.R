@@ -245,7 +245,7 @@ server <- function(input, output) {
     }
     #Using GGPLOT, plot the Base World Map
     rt1 <- rt1()
-    ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'blue', size = 0.8) + labs(title=paste('Map:', word1)) 
+    ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'blue', size = 0.8) + labs(title=paste('Map:', word1))+ theme(plot.title = element_text(hjust = 0.5, size = 16, face = 'bold'))
   })
   
   
@@ -439,7 +439,7 @@ server <- function(input, output) {
       word2 <- input$default2
     }
     rt1 <- rt2()
-    ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'red', size = 0.8) +labs(title=paste('Map:',word2))
+    ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'red', size = 0.8) +labs(title=paste('Map:',word2)) +theme(plot.title = element_text(hjust = 0.5, size = 16, face='bold'))
   })
   
   output$comparison <- renderPlot({
