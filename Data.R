@@ -16,7 +16,18 @@ create_token(
 
 ## search for 18000 tweets using the rstats hashtag
 rt <- search_tweets(
-  "Republican", n = 18000,geocode = lookup_coords('usa'), include_rts = FALSE
+  "MLB", n = 18000,geocode = lookup_coords('usa'), include_rts = FALSE
+)
+
+create_token(
+  app = "ergqwb12324r3",
+  consumer_key = "jnw2qnJPESXlGsrdn2labCW4L",
+  consumer_secret = "kKrWvONmIb8muABNgWFFG7A6d6HhtlZNodiXlzb1tRmdClGWsR",
+  access_token = "632015603-ASMkADJhXvo7KcLt27Cgt7MIig2IfYtOc75xDBRu",
+  access_secret = "BzXbPR6wnzjO9OrdZJskn9U21952gjVcbVMNqcltpZLE4")
+
+rt <- search_tweets(
+  input$keyword2, n = 9000, include_rts = FALSE, geocode = lookup_coords('usa')
 )
 
 head(rt, 6)

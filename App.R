@@ -24,8 +24,8 @@ ui <- fluidPage(
                     FALSE),
       textInput('keyword1', "First Keyword to Search:", ""),
       textInput("keyword2", "Second Keyword to Search:", ""),
-      selectInput('default1', 'Pre-downloaded Keyword 1:', c('Apple', 'Samsung','Republican', 'Democrat'), selected='Democrat'),
-      selectInput('default2', 'Pre-downloaded Keyword 2:', c('Apple', 'Samsung','Republican', 'Democrat'),selected='Republican')
+      selectInput('default1', 'Pre-downloaded Keyword 1:', c('Democrat', 'Republican','Apple', 'Samsung', 'MLB','NFL'), selected='Democrat'),
+      selectInput('default2', 'Pre-downloaded Keyword 2:', c('Democrat', 'Republican', 'Apple', 'Samsung','MLB', 'NFL'),selected='Republican')
     ),
     # Main panel for displaying outputs ----
     mainPanel(
@@ -34,8 +34,8 @@ ui <- fluidPage(
       tabsetPanel(type = "tabs",
                   tabPanel('Maps',
                     fluidRow(
-                      column(width = 5,plotOutput("plot1")),
-                      column(width = 5, plotOutput("plot2"))
+                      column(width = 6,plotOutput("plot1")),
+                      column(width = 6, plotOutput("plot2"))
                     )
                   ),
                   tabPanel('Compare By State', plotOutput('comparison', height='600px'), 
@@ -399,9 +399,17 @@ server <- function(input, output) {
     key2 <- key2 %>%
       group_by(state) %>%
       summarise(count2 = n()) 
-    key <- merge(key1, key2, by = 'state')
+    key <- merge(key1, key2, by = 'state', all = TRUE)
+    
     key <- key %>%
       filter(!is.na(state))
+    for(i in 1:length(key$state)){
+      if(is.na(key[i,3]) ){
+        key[i,3] = 0
+      }else if(is.na(key[i,2])){
+        key[i,2] = 0
+      }
+    }
     return(key)
   })
   
@@ -448,7 +456,7 @@ server <- function(input, output) {
     state2 <- vector()
     state3 <- vector()
     for(i in 1:length(key$state)){
-      if(key[i,2] > key[i,3]){
+      if(key[i,2] > key[i,3] ){
         state1 <- c(state1, key[i,1])
       }else if(key[i,3] > key[i,2]){
         state2 <- c(state2, key[i,1])
@@ -459,10 +467,10 @@ server <- function(input, output) {
     
     map(database = 'state')
     if(!identical(state1, logical(0))){
-      map(database = "state",regions = state1,col = "red",fill=T,add=TRUE)
+      map(database = "state",regions = state1,col = "blue",fill=T,add=TRUE)
     }
     if(!identical(state2, logical(0))){
-      map(database = "state",regions = state2,col = "blue",fill=T,add=TRUE)
+      map(database = "state",regions = state2,col = "red",fill=T,add=TRUE)
     }
     if(!identical(state3, logical(0))){
       map(database = "state",regions = state3,col = "light gray",fill=T,add=TRUE)
