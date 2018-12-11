@@ -24,8 +24,8 @@ ui <- fluidPage(
                     FALSE),
       textInput('keyword1', "First Keyword to Search:", ""),
       textInput("keyword2", "Second Keyword to Search:", ""),
-      selectInput('default1', 'Pre-downloaded Keyword 1:', c('Democrat', 'Republican','Apple', 'Samsung', 'MLB','NFL'), selected='Democrat'),
-      selectInput('default2', 'Pre-downloaded Keyword 2:', c('Democrat', 'Republican', 'Apple', 'Samsung','MLB', 'NFL'),selected='Republican')
+      selectInput('default1', 'Pre-downloaded Keyword 1:', c('Democrat', 'Republican','Apple', 'Samsung', 'MLB','NFL','DCComics', 'Marvel'), selected='Democrat'),
+      selectInput('default2', 'Pre-downloaded Keyword 2:', c('Democrat', 'Republican', 'Apple', 'Samsung','MLB', 'NFL','DCComics','Marvel'),selected='Republican')
     ),
     # Main panel for displaying outputs ----
     mainPanel(
