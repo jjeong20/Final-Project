@@ -3,7 +3,8 @@ library(dplyr)
 library(rtweet)
 library(DT)
 library(ggplot2)
-
+library(maps)
+library(maptools)
 
 # Define UI
 ui <- fluidPage(
@@ -37,10 +38,10 @@ ui <- fluidPage(
                       column(width = 5, plotOutput("plot2"))
                     )
                   ),
-                  tabPanel('Compare By State', plotOutput('comparison'), 
+                  tabPanel('Compare By State', plotOutput('comparison', height='600px'), 
                            fluidRow(
-                             column(width = 5,plotOutput("comparison2")),
-                             column(width = 5, plotOutput("comparison3"))
+                             column(width = 6,plotOutput("comparison2")),
+                             column(width = 6, plotOutput("comparison3"))
                            )
                            ),
                   tabPanel('Top Hashtags',
@@ -466,8 +467,9 @@ server <- function(input, output) {
     if(!identical(state3, logical(0))){
       map(database = "state",regions = state3,col = "light gray",fill=T,add=TRUE)
     }
+    title("Comparative Keyword Distribution By State")
     legend("bottomright", c(word1, word2, 'Neutral'), fill = c('blue', 'red','gray'))
-  
+    
     keyword2 <- key %>%
       mutate(diff = count2 - count1) %>%
       arrange(desc(diff)) %>%
@@ -489,7 +491,7 @@ server <- function(input, output) {
       arrange(desc(diff)) %>%
       head(10)
     ggplot(keyword1, aes(reorder(state, -diff, sum), diff))+
-      xlab("Top 10 States")+ggtitle(paste('Top 10 States "',word1 ,'" Was Searched More than "',word2,'"', sep=""))+
+      xlab("Top 10 States")+ggtitle(paste('Top 10 States "',word1 ,'" Was Searched More Than "',word2,'"', sep=""))+
       theme(axis.text.x = element_text(angle=60, hjust=1))+
       geom_col()
   })
@@ -508,7 +510,7 @@ server <- function(input, output) {
       arrange(desc(diff)) %>%
       head(10)
     ggplot(keyword2, aes(reorder(state, -diff, sum), diff))+
-      xlab("Top 10 States")+ggtitle(paste('Top 10 States "',word2 ,'" Was Searched More than "',word1,'"', sep=""))+
+      xlab("Top 10 States")+ggtitle(paste('Top 10 States "',word2 ,'" Was Searched More Than "',word1,'"', sep=""))+
       theme(axis.text.x = element_text(angle=60, hjust=1))+
       geom_col()
   })
