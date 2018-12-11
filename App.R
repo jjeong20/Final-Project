@@ -90,7 +90,7 @@ server <- function(input, output) {
         access_secret = "w2G2EBRNnUOxdEqRCrHeYOPTE4dFTgT0qWC2OnJVC4uap")
       
       rt <- search_tweets(
-        input$keyword1, n = 18000, include_rts = FALSE, geocode = lookup_coords('usa')
+        input$keyword1, n = 9000, include_rts = FALSE, geocode = lookup_coords('usa')
       )
     }
     else{
@@ -261,7 +261,7 @@ server <- function(input, output) {
         access_secret = "BzXbPR6wnzjO9OrdZJskn9U21952gjVcbVMNqcltpZLE4")
       
       rt <- search_tweets(
-        input$keyword2, n = 18000, include_rts = FALSE, geocode = lookup_coords('usa')
+        input$keyword2, n = 9000, include_rts = FALSE, geocode = lookup_coords('usa')
       )
     }
     else{
