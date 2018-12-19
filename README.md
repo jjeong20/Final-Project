@@ -1,5 +1,4 @@
 # Final-Project
-Final Project forStat-231-Fall-2018
 
 Open "Report.RMD" to read through our write-up.
 
