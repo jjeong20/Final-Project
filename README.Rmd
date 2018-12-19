@@ -1,0 +1,10 @@
+---
+title: "README"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Either input the keywords of interest, or select from pre-downloaded samples, results will return automatically. Scroll through each tab.
