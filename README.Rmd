@@ -7,4 +7,8 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Either input the keywords of interest, or select from pre-downloaded samples, results will return automatically. Scroll through each tab.
+Open "Report.RMD" to read through our write-up.
+
+Open "App.R" Either input the keywords of interest, or select from pre-downloaded samples, results will return automatically. Scroll through each tab.
+
+Open "Analysis.R" to read through the our sample chi-squared test.
