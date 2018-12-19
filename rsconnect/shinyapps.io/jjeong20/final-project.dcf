@@ -5,6 +5,6 @@ account: jjeong20
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 613067
-bundleId: 1754436
+bundleId: 1754701
 url: https://jjeong20.shinyapps.io/final-project/
-when: 1544493747.69479
+when: 1544501535.15125

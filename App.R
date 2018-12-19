@@ -84,6 +84,7 @@ server <- function(input, output) {
   rt_var1 <- reactive({
     if(input$search_tweets){
       create_token(
+        # Twitter API Credentials
         app = "StatsProjectAmherst",
         consumer_key = "xC2cjGbujenmQyv86xAzAroDp",
         consumer_secret = "Pye14GbWEjUor2mnEq6GfICuf99M7OQajfJBhK6xH1R6mjE3df",
@@ -95,10 +96,11 @@ server <- function(input, output) {
       )
     }
     else{
+      #loading a pre-downloaded dataset
       filename <- paste(input$default1, "rds", sep=".")
       rt <- readRDS(filename)
     }
-    
+    # select only the variables of interest
     rt <- rt %>%
       filter(lang == 'en') %>%
       select (screen_name, text, source, favorite_count, retweet_count, 
@@ -107,20 +109,25 @@ server <- function(input, output) {
   })
 
   
-  # Create reactive data frame
+  # Create reactive data frame for top hashtags tab
   hashtag1 <- reactive({
+    
     rt2 <- rt_var1() %>%
       select(hashtags) %>%
       filter(!is.na(hashtags))
     
     hashtag_name <- vector()
     
+    # since entries in hashtag column are vectors and not strings,
+    # I created a new vector that appends all the hashtag vectors 
+    # into one-dimensional vector
     for(hashtag in rt2$hashtags){
       for(tag in hashtag){
         hashtag_name = c(hashtag_name, tag)
       }
     }
     
+    # get each hashtag's frequencies
     freq <- data.frame(hashtag_name) %>%
       group_by(hashtag_name) %>%
       summarise(count = n()) %>%
@@ -130,7 +137,7 @@ server <- function(input, output) {
     
   })
   
-  # Create reactive data frame
+  # Create reactive data frame for top favorited tweets tab
   top_favorite1 <- reactive({
     rt3 <- rt_var1()%>%
       select(favorite_count, retweet_count, screen_name, text)
@@ -145,7 +152,7 @@ server <- function(input, output) {
 
   })
   
-  # Create reactive data frame
+  # Create reactive data frame for top retweeted tweets tab
   top_retweet1 <- reactive({
     rt3 <- rt_var1()%>%
       select(favorite_count, retweet_count, screen_name, text)
@@ -160,6 +167,7 @@ server <- function(input, output) {
     
   })
   
+  # create reactive data frame for tweets by most followed users tab 
   top_followed1 <- reactive({
      rt4 <- rt_var1()  %>%
        select(followers_count, screen_name, text) %>%
@@ -170,15 +178,18 @@ server <- function(input, output) {
     
   })
   
+  # Create reactive data frame for geographical distribution analysis
   rt1 <- reactive({
     rt_var <- rt_var1()
+    
+    # filter out missing bbox coords in form of (NA, NA, ..., NA)
     n_coords_na <- sapply(rt_var$bbox_coords, FUN=function(x) sum(is.na(x)))
     rt_var$n_missing_coords <- n_coords_na
-    
     rt1 <- rt_var%>%
       filter(n_missing_coords == 0) %>%
       select(bbox_coords)
     
+    # average bounding box coordinates to estimate latitude and longitude
     long <- vector()
     lat <- vector()
     for(i in 1:length(rt1$bbox_coords)){
@@ -192,13 +203,19 @@ server <- function(input, output) {
       }
     }
     
+    # add as columns in data frame
     rt1$lat <- lat
     rt1$long <- long
     return(rt1)
   })
   
+  # in the data frame for geographical distributions, 
+  # identify what state each tweet is from 
   states1 <- reactive({
     rt1 <- rt1()
+    
+    # function: given a data frame of latitudes and longitudes
+    # identify each location's state and return the result
     latlong2state <- function(pointsDF) {
       states <- map('state', fill=TRUE, col="transparent", plot=FALSE)
       IDs <- sapply(strsplit(states$names, ":"), function(x) x[1])
@@ -210,11 +227,16 @@ server <- function(input, output) {
       stateNames <- sapply(states_sp@polygons, function(x) x@ID)
       stateNames[indices]
     }
+    
+    # format rt_coords to use latlong2state function
     rt_coords <- rt1[,2:3]
     rt_coords[,1] <-rt1[,3] 
     rt_coords[,2] <- rt1[,2]
     names(rt_coords) <- c('long', 'lat')
+    
+    # identify states
     states <- latlong2state(rt_coords)
+    # add as column
     rt1$state <- states
     return(rt1)
   })
@@ -248,7 +270,8 @@ server <- function(input, output) {
     ggplot(rt1, aes(long, lat)) + borders('state', colour = 'gray50', fill='gray') + geom_point(color = 'blue', size = 0.8) + labs(title=paste('Map:', word1))+ theme(plot.title = element_text(hjust = 0.5, size = 16, face = 'bold'))
   })
   
-  
+  # Repeat the above operations for keyword 2
+  # Structure is identical to above (omitted redundant comments) until line 416
   
   # Keyword 2
   ## search for 18000 tweets using the rstats hashtag
@@ -390,19 +413,24 @@ server <- function(input, output) {
     return(rt1)
   })
   
+  # merging the two geographical distributions
   joined_states<-reactive({
     key1 <- states1()
     key2 <- states2()
+    # retrieve keyword1's state distribution and group by state
     key1 <- key1 %>%
       group_by(state) %>%
       summarise(count1 = n())
+    # retrieve keyword2's state distribution and group by state
     key2 <- key2 %>%
       group_by(state) %>%
       summarise(count2 = n()) 
+    # merge the two datasets by state
     key <- merge(key1, key2, by = 'state', all = TRUE)
     
     key <- key %>%
       filter(!is.na(state))
+    # replace missing data with 0
     for(i in 1:length(key$state)){
       if(is.na(key[i,3]) ){
         key[i,3] = 0
@@ -452,8 +480,11 @@ server <- function(input, output) {
     }
     
     key <- joined_states()
+    #state1 to contain names of states that keyword1 was used more than keyword2
     state1 <- vector()
+    #state2 to include names of states that keyword2 was used more than keyword1
     state2 <- vector()
+    #state3 to include names of states that keyword1 and keyword2 were used the same number of times
     state3 <- vector()
     for(i in 1:length(key$state)){
       if(key[i,2] > key[i,3] ){
@@ -467,22 +498,19 @@ server <- function(input, output) {
     
     map(database = 'state')
     if(!identical(state1, logical(0))){
+      #color states that used keyword1 more than keyword2 blue
       map(database = "state",regions = state1,col = "blue",fill=T,add=TRUE)
     }
     if(!identical(state2, logical(0))){
+      #color states that used keyword2 more than keyword1 red
       map(database = "state",regions = state2,col = "red",fill=T,add=TRUE)
     }
     if(!identical(state3, logical(0))){
+      #color neutral states light gray
       map(database = "state",regions = state3,col = "light gray",fill=T,add=TRUE)
     }
     title("Comparative Keyword Distribution By State")
     legend("bottomright", c(word1, word2, 'Neutral'), fill = c('blue', 'red','gray'))
-    
-    keyword2 <- key %>%
-      mutate(diff = count2 - count1) %>%
-      arrange(desc(diff)) %>%
-      head(10)
-    keyword2
   })
   
   output$comparison2 <- renderPlot({
@@ -494,10 +522,12 @@ server <- function(input, output) {
       word2 <- input$default2
     }
     key <- joined_states()
+    # top 10 states keyword 1 was used more than keyword2
     keyword1 <- key %>%
       mutate(diff = count1 - count2) %>%
       arrange(desc(diff)) %>%
       head(10)
+    # graph the above
     ggplot(keyword1, aes(reorder(state, -diff, sum), diff))+
       xlab("Top 10 States")+ggtitle(paste('Top 10 States "',word1 ,'" Was Searched More Than "',word2,'"', sep=""))+
       theme(axis.text.x = element_text(angle=60, hjust=1))+
